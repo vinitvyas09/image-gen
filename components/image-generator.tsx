@@ -95,6 +95,7 @@ export default function ImageGenerator() {
             imageUrl={generatedImages[model.id]}
             modelName={model.name}
             isGenerating={generatingModels.includes(model.id)}
+            time={model.time}
           />
         ))}
       </div>
