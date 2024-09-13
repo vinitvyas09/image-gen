@@ -15,15 +15,24 @@ const models = [
   { id: 'sdxl-emoji', name: 'SDXL Emoji', time: '~20s' },
 ];
 
+type GeneratedImage = {
+  id: string;
+  url: string;
+  likes: number;
+  liked: boolean;
+  model: string;
+  time: string;
+};
+
 export default function ImageGenerator() {
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingModels, setGeneratingModels] = useState<string[]>([]);
-  const [generatedImages, setGeneratedImages] = useState<{ [key: string]: string }>({});
+  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
 
   const generateImages = async () => {
     setIsGenerating(true);
-    setGeneratedImages({});
+    setGeneratedImages([]);
     setGeneratingModels(models.map((model) => model.id));
 
     models.forEach(async (model) => {
@@ -37,8 +46,16 @@ export default function ImageGenerator() {
         });
         const data = await response.json();
         if (data.output && data.output[0]) {
-          setGeneratedImages((prev) => ({ ...prev, [model.id]: data.output[0] }));
-          saveGeneratedImage(model.id, data.output[0]);
+          const newImage: GeneratedImage = {
+            id: uuidv4(),
+            url: data.output[0],
+            likes: 0,
+            liked: false,
+            model: model.name,
+            time: model.time,
+          };
+          setGeneratedImages((prev) => [...prev, newImage]);
+          saveGeneratedImage(newImage);
         }
       } catch (error) {
         console.error(`Error generating image for ${model.name}:`, error);
@@ -50,17 +67,9 @@ export default function ImageGenerator() {
     setIsGenerating(false);
   };
 
-  const saveGeneratedImage = (modelId: string, imageUrl: string) => {
-    const newImage = {
-      id: uuidv4(),
-      url: imageUrl,
-      likes: 0,
-      liked: false,
-      model: models.find((m) => m.id === modelId)?.name || 'Unknown',
-    };
-
+  const saveGeneratedImage = (image: GeneratedImage) => {
     const savedImages = JSON.parse(localStorage.getItem('generatedImages') || '[]');
-    savedImages.unshift(newImage);
+    savedImages.unshift(image);
     localStorage.setItem('generatedImages', JSON.stringify(savedImages));
   };
 
@@ -89,15 +98,22 @@ export default function ImageGenerator() {
         </Button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {models.map((model) => (
-          <ModelImage
-            key={model.id}
-            imageUrl={generatedImages[model.id]}
-            modelName={model.name}
-            isGenerating={generatingModels.includes(model.id)}
-            time={model.time}
-          />
-        ))}
+        {models.map((model) => {
+          const image = generatedImages.find((img) => img.model === model.name);
+
+          return (
+            <ModelImage
+              key={model.id}
+              imageUrl={image?.url}
+              modelName={model.name}
+              isGenerating={generatingModels.includes(model.id)}
+              time={model.time}
+              initialLikes={image?.likes || 0}
+              initialLiked={image?.liked || false}
+              imageId={image?.id || model.id}
+            />
+          );
+        })}
       </div>
     </Card>
   );
