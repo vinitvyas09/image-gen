@@ -10,6 +10,41 @@ type ModelImageProps = {
 };
 
 const ModelImage: React.FC<ModelImageProps> = ({ imageUrl, modelName, isGenerating }) => {
+  const handleDownload = async () => {
+    if (!imageUrl) return;
+
+    try {
+      // Fetch the image as a blob
+      const response = await fetch(imageUrl, {
+        mode: 'cors',
+        credentials: 'omit',
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const blob = await response.blob();
+
+      // Create a blob URL
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      // Create a link element and trigger a download
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${modelName.replace(/\s+/g, '_')}.png`; // Set the desired filename
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Error downloading the image:', error);
+      alert('Failed to download image. Please try again.');
+    }
+  };
+
   return (
     <div className="flex flex-col items-center">
       <div className="relative group aspect-square w-full bg-gray-100 rounded-lg overflow-hidden mb-2">
@@ -29,7 +64,7 @@ const ModelImage: React.FC<ModelImageProps> = ({ imageUrl, modelName, isGenerati
             <button className="text-white mr-2">
               <Heart size={24} />
             </button>
-            <button className="text-white">
+            <button onClick={handleDownload} className="text-white">
               <Download size={24} />
             </button>
           </div>
