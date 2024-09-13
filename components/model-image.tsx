@@ -7,9 +7,10 @@ type ModelImageProps = {
   imageUrl?: string;
   modelName: string;
   isGenerating: boolean;
+  time: string; // Added time prop
 };
 
-const ModelImage: React.FC<ModelImageProps> = ({ imageUrl, modelName, isGenerating }) => {
+const ModelImage: React.FC<ModelImageProps> = ({ imageUrl, modelName, isGenerating, time }) => {
   const handleDownload = async () => {
     if (!imageUrl) return;
 
@@ -72,6 +73,7 @@ const ModelImage: React.FC<ModelImageProps> = ({ imageUrl, modelName, isGenerati
       </div>
       <div className="text-center">
         <p className="font-semibold">{modelName}</p>
+        <p className="text-sm text-gray-500">{time}</p>
       </div>
     </div>
   );
